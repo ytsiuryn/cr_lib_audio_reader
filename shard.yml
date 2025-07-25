@@ -1,0 +1,21 @@
+name: reader
+version: 0.1.0
+
+authors:
+  - Yury Tsiuryn <yuri.turin@gmail.com>
+
+# description: |
+#   Short description of reader
+
+dependencies:
+  bindata:
+    github: spider-gazelle/bindata 
+#     version: "~> 0.5"
+  core:
+    path: "../core"
+
+development_dependencies:
+  ameba:
+    github: crystal-ameba/ameba
+
+# license: MIT
