@@ -145,7 +145,7 @@ class MP3Header < BinData
   endian :big
 
   bit_field do
-    bits 12, sync : UInt8 #, verify: -> { sync == 0xFFF }
+    bits 12, sync : UInt8 # , verify: -> { sync == 0xFFF }
     bits 1, mpeg_version : MPEGVersion = MPEGVersion::MPEG1
     bits 2, layer : Layer = Layer::RESERVED
     bits 1, _protection
@@ -190,10 +190,10 @@ class MP3 < BinData
 
     # mp3 = MP3Header.new
     # mp3.read(@io)
-    
+
     # TODO: читать теги ID3V1
     # pp! mp3.mpeg_version, mp3.layer
-    
+
     # @t.ainfo = AudioInfo.new(avg_bitrate: mp3.avg_bitrate, samplerate: mp3.samplerate)
 
     r.tracks << @t

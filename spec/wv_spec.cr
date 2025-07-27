@@ -18,6 +18,8 @@ it "WavPack mono track parsing" do
   t.position.should eq "03"
   t.notes.should contain "test_notes"
   t.composition.roles.has_key?("test_composer").should be_true
+  t.unprocessed.size.should eq 0
+
   r.title.should eq "test_album_title"
   r.total_tracks.should eq 10
   r.roles["test_track_artist"].should eq Set{"performer"}

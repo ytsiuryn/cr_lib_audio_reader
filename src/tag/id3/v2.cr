@@ -6,14 +6,13 @@
 
 require "bindata"
 require "core"
-require "../../parser"
 
 ID3_MAGIC = "ID3"
 
 def block_size(_size)
-  _size.reduce(0) do |acc, b|
+  _size.reduce(0) do |acc, byte|
     acc <<= 7
-    acc |= b
+    acc |= byte
   end
 end
 
@@ -104,7 +103,11 @@ private class PictureValue < TextFrameValue
     read(io)
     p = PictureInAudio.new(pict_type)
     p.md.mime = mime
-    p.url = description # или Notes
+    if PictureInAudio.file_reference?(description)
+      p.url = description
+    else
+      p.notes << description
+    end
     p.data = pict_data
     p
   end

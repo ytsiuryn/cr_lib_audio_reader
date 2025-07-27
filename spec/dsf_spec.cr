@@ -2,10 +2,10 @@ require "spec"
 require "core"
 require "../src/dsf"
 
-describe Dsf do
+describe DSF do
   it "#fill" do
     r = Release.new
-    dsf = Dsf.new("spec/data/dsf/440_hz_mono.dsf")
+    dsf = DSF.new("spec/data/dsf/440_hz_mono.dsf")
     dsf.apply_to(r)
     
     t = r.tracks[-1]
@@ -20,6 +20,7 @@ describe Dsf do
     t.genres.should contain "test_genre"
     t.notes.should contain "test_notes"
     t.composition.roles.has_key?("test_composer").should be_true
+    t.unprocessed.size.should eq 0
     
     r.title.should eq "test_album_title"
     r.total_tracks.should eq 10

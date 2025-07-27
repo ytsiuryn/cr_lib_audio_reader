@@ -2,10 +2,10 @@ require "spec"
 require "core"
 require "../src/flac"
 
-describe Flac do
+describe FLAC do
   it "#fill" do
     r = Release.new
-    flac = Flac.new("spec/data/flac/440_hz_mono.flac")
+    flac = FLAC.new("spec/data/flac/440_hz_mono.flac")
     flac.apply_to(r)
 
     t = r.tracks[-1]
@@ -15,6 +15,7 @@ describe Flac do
     t.notes.should contain "test_notes"
     t.ainfo.avg_bitrate.should eq 152
     t.composition.roles.has_key?("test_composer").should be_true
+    t.unprocessed.size.should eq 0
 
     r.title.should eq "test_album_title"
     r.total_tracks.should eq 10

@@ -263,7 +263,7 @@ class TagProcessor
 
   # Обработка переданных тегов с обновлением метаданных трека, альбома, релиза.
   # Необработанные теги возвращаются функцией обратно.
-  def process
+  def process # ameba:disable Metrics/CyclomaticComplexity
     @t.unprocessed.each do |k, v|
       native_key = @native_tags[k]?
       res = case native_key
@@ -321,7 +321,7 @@ class TagProcessor
               # PartNumber
               # when Tag::Isrc                              then @t.ids["isrc"] = v # FIXME
             end
-      if res
+      if res.nil? || res # ошибка - явное указание `false`
         @t.unprocessed[k] = ""
       end
     end
@@ -333,7 +333,7 @@ class TagProcessor
   private def set_total_discs(k : String, v : String)
     if n = v.to_i?
       @r.total_discs = n
-      return true
+      return
     end
     false
   end
@@ -342,27 +342,23 @@ class TagProcessor
     if n = v.to_i?
       @r.total_tracks = n
     end
-    true
   end
 
   private def set_moods(v : String)
     v.gsub(%r{[,;\/\(\)\[\]&]}, ' ').split.each do |mood_str|
       @t.moods << Mood.parse(mood_str)
     end
-    true
   end
 
   private def set_copyright(v : String)
     unless @l.name.empty?
       @l.name = v.delete('@').delete('\u2122').strip
     end
-    true
   end
 
   private def set_lirycs(v : String, is_synced : Bool)
     @t.composition.lyrics.text = v
     @t.composition.lyrics.is_synced = is_synced
-    true
   end
 
   # Обработка строк формата "6/12", где 6 - позиция трека, 12 - общее число треков.
@@ -379,7 +375,6 @@ class TagProcessor
         return false
       end
     end
-    true
   end
 
   private def parse_date(v : String)
@@ -394,22 +389,14 @@ class TagProcessor
 
   # Разбор timestamp ISO 8601 (yyyy-MM-ddTHH:mm:ss) или ее подстроки для Release.Year.
   private def parse_and_set_year_from_date(k : String, v : String)
-    if year = parse_date(v)
-      @r.issues.actual.year = year
-    else
-      return false
-    end
-    true
+    return false unless year = parse_date(v)
+    @r.issues.actual.year = year
   end
 
   # Разбор timestamp ISO 8601 (yyyy-MM-ddTHH:mm:ss) / подстроки для Release.Album.Year
   private def parse_and_set_original_year_from_date(k : String, v : String)
-    if year = parse_date(v)
-      @r.issues.ancestor.year = year
-    else
-      return false
-    end
-    true
+    return false unless year = parse_date(v)
+    @r.issues.ancestor.year = year
   end
 
   # Возможный формат {soloists,conductor,orchestra}, разделенный ';' с указанием
@@ -418,12 +405,12 @@ class TagProcessor
     parts = v.split(";") # Разделяем по ';' для обработки ролей
     if parts.size == 1
       # Простой список имён через запятую
-      parts[0].split(",").each do |nm|
-        @r.add_role(nm.strip)
+      parts[0].split(",").each do |name|
+        @r.add_role(name.strip)
       end
     else
-      parts.each do |ai|
-        roles = ai.gsub(/[,;\/\(\)\[\]&]/, ',').split(',')
+      parts.each do |artist|
+        roles = artist.gsub(/[,;\/\(\)\[\]&]/, ',').split(',')
         if !roles.empty?
           name = roles.first?.try(&.strip) || ""
           remaining_roles = roles[1..-1] || [] of String
@@ -432,21 +419,16 @@ class TagProcessor
           end
           @r.add_actor(name, "", "") unless name.empty?
         else
-          @r.add_actor(ai.strip, "", "")
+          @r.add_actor(artist.strip, "", "")
         end
       end
     end
-    true
   end
 
   # TODO: Разобрать номер трека и, при наличии номер диска, установить его по примеру
   # set_disc_num(track::disc_num_by_track_pos(dsf.tr.position()));
   private def set_track_disc_number(k : String, v : String)
-    if dn = v.to_i?
-      @t.disc_num = dn
-    else
-      return false
-    end
-    true
+    return false unless dn = v.to_i?
+    @t.disc_num = dn
   end
 end

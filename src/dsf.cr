@@ -11,7 +11,7 @@ DSF_MAGIC = "DSD "
 FMT_SIGN  = "fmt "
 
 # Общий заголовок
-private class DsfChunk < BinData
+private class DSFChunk < BinData
   endian :little
 
   field magic : String, length: -> { 4 }, verify: -> { magic == DSF_MAGIC }
@@ -49,14 +49,14 @@ private class FmtChunk < BinData
   end
 end
 
-class Dsf < BinData
+class DSF < BinData
   def initialize(fn : String)
     @track = Track.new(path: fn)
     @io = File.open(fn, mode: "rb")
   end
 
   def apply_to(r : Release)
-    dsf_chunk = DsfChunk.new
+    dsf_chunk = DSFChunk.new
     dsf_chunk.read(@io)
 
     fmt_chunk = FmtChunk.new

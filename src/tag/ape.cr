@@ -26,11 +26,11 @@ private class ApeTag < BinData
   field name : String
   field value : Bytes, length: -> { item_len }
 
-  def is_text
+  def text?
     text_encoding == 0
   end
 
-  def is_picture
+  def picture?
     name.starts_with?("COVER ART")
   end
 end
@@ -54,7 +54,7 @@ class ApeParser < BinData
       tag = ApeTag.new
       tag.read(io)
 
-      if tag.is_picture
+      if tag.picture?
         null_pos = tag.value.index(0x00) || tag.value.size - 1
         pict_type = case tag.name
                     when COVER_FRONT_TAG then PictType::COVER_FRONT
@@ -65,7 +65,7 @@ class ApeParser < BinData
         p.url = String.new(tag.value[0, null_pos])
         p.data = tag.value[null_pos + 1..-1]
         r.pictures << p
-      elsif tag.is_text
+      elsif tag.text?
         t.unprocessed[tag.name] = String.new(tag.value)
       else
         # @binary_tags[tag.name] = tag.value

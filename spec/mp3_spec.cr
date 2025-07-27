@@ -16,6 +16,7 @@ describe MP3 do
     # t.ainfo.samplerate.should eq 44_100
     # из таблиц, но все считают обычно, с помощью длительности и размера аудио потока, у меня нет "длительности"
     # t.ainfo.avg_bitrate.should eq 56
+    t.unprocessed.size.should eq 0
 
     r.title.should eq "test_album_title"
     r.total_tracks.should eq 10

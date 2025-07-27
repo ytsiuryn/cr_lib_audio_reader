@@ -7,8 +7,8 @@ require "core"
 require "./tag"
 require "./tag/ape"
 
-WV_BLOCK_SIGN = "wvpk"
-WV_HEADER_SIZE   = 32
+WV_BLOCK_SIGN  = "wvpk"
+WV_HEADER_SIZE = 32
 
 # Не указанные в мапе =>
 # 0b0000 	get from STREAMINFO metadata block
@@ -30,7 +30,7 @@ SAMPLERATES = {
   11 => 96000,
 }
 
-private class WvHeader < BinData
+private class WVHeader < BinData
   endian :little
 
   field ck_id : String, length: -> { 4 }, verify: -> { ck_id == "wvpk" }
@@ -113,7 +113,7 @@ class WavPack < BinData
   def apply_to(r : Release)
     read(@io)
 
-    header = WvHeader.new
+    header = WVHeader.new
     header.read(@io)
     @io.pos = header.ck_size + 8
 

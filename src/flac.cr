@@ -36,7 +36,7 @@ private class BlockHeader < BinData
   end
 end
 
-private class FlacBlock < BinData
+private class FLACKBlock < BinData
   property header : BlockHeader = BlockHeader.new
 
   def read_block(io : IO) : Nil
@@ -46,7 +46,7 @@ private class FlacBlock < BinData
   def process; end
 end
 
-private class StreamInfoBlock < FlacBlock
+private class StreamInfoBlock < FLACKBlock
   endian :big
 
   field _ignored : Bytes, length: -> { 10 }
@@ -69,12 +69,12 @@ private class StreamInfoBlock < FlacBlock
   end
 end
 
-private class CueSheetBlock < FlacBlock
+private class CueSheetBlock < FLACKBlock
   field _ignored : Bytes, length: -> { 9 }
   field isrc : String, length: -> { 12 }
 end
 
-private class PictureBlock < FlacBlock
+private class PictureBlock < FLACKBlock
   endian :big
 
   field pict_type : PictType = PictType::UNKNOWN
@@ -110,7 +110,7 @@ private class PictureBlock < FlacBlock
 
   def process
     # raise "Incorrect track file info" if t.finfo.fsize == 0
-    return unless (PictureInAudio.file_reference?(descr) || data.size > 0)
+    return unless PictureInAudio.file_reference?(descr) || data.size > 0
     pict = PictureInAudio.new(pict_type)
     pict.md.mime = mime
     pict.md.width = width.to_i
@@ -121,7 +121,7 @@ private class PictureBlock < FlacBlock
   end
 end
 
-private class VorbisCommentBlock < FlacBlock
+private class VorbisCommentBlock < FLACKBlock
   field comments : VorbisComments = VorbisComments.new
 
   def initialize(@t : Track); end
@@ -131,7 +131,7 @@ private class VorbisCommentBlock < FlacBlock
   end
 end
 
-class Flac < BinData
+class FLAC < BinData
   field stream_marker : String, length: -> { 4 }, verify: -> { stream_marker == FLAC_MAGIC }
   @md_len = 0_u64
 

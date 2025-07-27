@@ -6,7 +6,7 @@
 
 require "bindata"
 
-ID3V1_MAGIC = "TAG"
+ID3V1_MAGIC       = "TAG"
 ID3V1_HEADER_SIZE = 128
 
 class ID3v1Parser < BinData
