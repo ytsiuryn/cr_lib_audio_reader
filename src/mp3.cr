@@ -188,13 +188,13 @@ class MP3 < BinData
       id3.read(@io, r, @t)
     end
 
-    # mp3 = MP3Header.new
-    # mp3.read(@io)
+    mp3 = MP3Header.new
+    mp3.read(@io)
 
     # TODO: читать теги ID3V1
     # pp! mp3.mpeg_version, mp3.layer
 
-    # @t.ainfo = AudioInfo.new(avg_bitrate: mp3.avg_bitrate, samplerate: mp3.samplerate)
+    @t.ainfo = AudioInfo.new(samplerate: mp3.samplerate) # avg_bitrate: mp3.avg_bitrate
 
     r.tracks << @t
 

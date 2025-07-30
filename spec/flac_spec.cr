@@ -3,7 +3,7 @@ require "core"
 require "../src/flac"
 
 describe FLAC do
-  it "#fill" do
+  it "#apply_to" do
     r = Release.new
     flac = FLAC.new("spec/data/flac/440_hz_mono.flac")
     flac.apply_to(r)

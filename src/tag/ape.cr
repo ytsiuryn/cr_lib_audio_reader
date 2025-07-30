@@ -50,6 +50,7 @@ class ApeParser < BinData
   def read(io : IO, r : Release, t : Track)
     super(io)
 
+    t.unprocessed = Unprocessed.new(initial_capacity: item_count)
     item_count.times do
       tag = ApeTag.new
       tag.read(io)

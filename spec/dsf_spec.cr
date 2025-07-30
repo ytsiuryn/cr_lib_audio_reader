@@ -3,25 +3,25 @@ require "core"
 require "../src/dsf"
 
 describe DSF do
-  it "#fill" do
+  it "#apply_to" do
     r = Release.new
     dsf = DSF.new("spec/data/dsf/440_hz_mono.dsf")
     dsf.apply_to(r)
-    
+
     t = r.tracks[-1]
-    
+
     t.ainfo.duration.should eq 500
     t.ainfo.channels.should eq 1
     t.ainfo.samplesize.should eq 1
     t.ainfo.samplerate.should eq 2822400
     # t.ainfo.avg_bitrate.should eq 2822
-    
+
     t.position.should eq "03"
     t.genres.should contain "test_genre"
     t.notes.should contain "test_notes"
     t.composition.roles.has_key?("test_composer").should be_true
     t.unprocessed.size.should eq 0
-    
+
     r.title.should eq "test_album_title"
     r.total_tracks.should eq 10
     r.issues.actual.year.should eq 2000

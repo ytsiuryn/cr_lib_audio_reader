@@ -9,6 +9,7 @@ require "core"
 
 ID3_MAGIC = "ID3"
 
+# :nodoc:
 def block_size(_size)
   _size.reduce(0) do |acc, byte|
     acc <<= 7
@@ -135,6 +136,8 @@ class ID3v2Parser < BinData
   field _flags : UInt8
   field _size : Bytes, length: -> { 4 }
 
+  def initialize(@skip_rest_zeros = false); end
+
   def size # TODO: нужен для md_len/avg_bitrate
     block_size(_size)
   end
@@ -176,6 +179,8 @@ class ID3v2Parser < BinData
         io.skip(tag.frame_sz)
       end
     end
-    # io.skip(size - io.pos + 10) # 10 - размер заголовка
+    if @skip_rest_zeros
+      io.skip(size - io.pos + 10) # 10 - размер заголовка
+    end
   end
 end

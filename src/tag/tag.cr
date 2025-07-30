@@ -259,6 +259,7 @@ class TagProcessor
                    in Schema::VORBIS_COMMENT then VORBIS_TAGS
                    in Schema::APE_V2         then APE_TAGS
                    end
+    @repeated_tags = [] of Tag
   end
 
   # Обработка переданных тегов с обновлением метаданных трека, альбома, релиза.
@@ -266,13 +267,16 @@ class TagProcessor
   def process # ameba:disable Metrics/CyclomaticComplexity
     @t.unprocessed.each do |k, v|
       native_key = @native_tags[k]?
+      unless @repeated_tags.empty? || @repeated_tags.includes?(native_key)
+        next
+      end
       res = case native_key
             when Tag::AlbumTitle                       then @r.title = v
             when Tag::ReleaseDate, Tag::Year           then parse_and_set_year_from_date(k, v)
             when Tag::Genre, Tag::Style                then @t.genres << v
             when Tag::TrackTitle                       then @t.title = v
             when Tag::Publisher, Tag::Label            then @l.name = v
-            when Tag::DiscNumber                       then set_track_disc_number(k, v)
+            when Tag::DiscNumber                       then set_disc_number(k, v)
             when Tag::DiscTotal                        then set_total_discs(k, v)
             when Tag::TrackTotal                       then set_total_tracks(k, v)
             when Tag::TrackNumber                      then set_track_pos_and_total_tracks(k, v)
@@ -287,10 +291,8 @@ class TagProcessor
             when Tag::RutrackerID                       then @r.ids[ReleaseIdType::RUTRACKER] = v
             when Tag::Country
               @r.issues.actual.countries << v unless @r.issues.actual.countries.includes?(v)
-            when Tag::MediaType then @d.fmt.media = Media.new(v)
-            when Tag::TrackSubtitle
-              # FIXME: если заголовок пустой и будет заполнен позже, то подзаголовок потеряется.
-              @t.title = Track.complex_title(@t.title, v) ? @t.title : v
+            when Tag::MediaType                         then @d.fmt.media = Media.new(v)
+            when Tag::TrackSubtitle                     then set_complex_track_title(v)
             when Tag::Length                            then @t.ainfo.duration_from_str = v
             when Tag::OriginalReleaseDate               then parse_and_set_original_year_from_date(k, v)
             when Tag::RecordingDates                    then @t.record.notes << v
@@ -319,7 +321,7 @@ class TagProcessor
               # Organisation
               # OriginalArtist
               # PartNumber
-              # when Tag::Isrc                              then @t.ids["isrc"] = v # FIXME
+            when Tag::Isrc then @t.record.ids[RecordIdType::ISRC] = v
             end
       if res.nil? || res # ошибка - явное указание `false`
         @t.unprocessed[k] = ""
@@ -328,6 +330,16 @@ class TagProcessor
     @t.unprocessed.reject! { |_, v| v.blank? }
     @r.discs << @d
     @r.issues.actual.add_label(@l)
+  end
+
+  private def set_complex_track_title(v : String)
+    if @t.title.empty?
+      unless @repeated_tags.includes?(Tag::TrackSubtitle) # делаем повторную попытку
+        @repeated_tags << Tag::TrackSubtitle
+      end
+      return false
+    end
+    @t.title = Track.complex_title(@t.title, v) ? @t.title : v
   end
 
   private def set_total_discs(k : String, v : String)
@@ -345,9 +357,7 @@ class TagProcessor
   end
 
   private def set_moods(v : String)
-    v.gsub(%r{[,;\/\(\)\[\]&]}, ' ').split.each do |mood_str|
-      @t.moods << Mood.parse(mood_str)
-    end
+    v.gsub(%r{[,;\/\(\)\[\]&]}, ' ').split.each { |mood_str| @t.moods << Mood.parse(mood_str) }
   end
 
   private def set_copyright(v : String)
@@ -405,9 +415,7 @@ class TagProcessor
     parts = v.split(";") # Разделяем по ';' для обработки ролей
     if parts.size == 1
       # Простой список имён через запятую
-      parts[0].split(",").each do |name|
-        @r.add_role(name.strip)
-      end
+      parts[0].split(",").each { |name| @r.add_role(name.strip) }
     else
       parts.each do |artist|
         roles = artist.gsub(/[,;\/\(\)\[\]&]/, ',').split(',')
@@ -415,7 +423,7 @@ class TagProcessor
           name = roles.first?.try(&.strip) || ""
           remaining_roles = roles[1..-1] || [] of String
           remaining_roles.each do |role|
-            @t.record.add_role(name, role.strip) if !role.strip.empty? # FIXME: не эффективно
+            @t.record.add_role(name, role.strip) unless role.blank?
           end
           @r.add_actor(name, "", "") unless name.empty?
         else
@@ -425,10 +433,18 @@ class TagProcessor
     end
   end
 
-  # TODO: Разобрать номер трека и, при наличии номер диска, установить его по примеру
-  # set_disc_num(track::disc_num_by_track_pos(dsf.tr.position()));
-  private def set_track_disc_number(k : String, v : String)
-    return false unless dn = v.to_i?
-    @t.disc_num = dn
+  private def set_disc_number(k : String, v : String)
+    flds = v.split('/')
+    flds_len = flds.size
+    if (1..2).includes?(flds_len)
+      if dn = flds[0].to_i?
+        @t.disc_num = dn
+      end
+    end
+    if flds_len == 2
+      if n = flds[1].to_i?
+        @r.total_discs = n
+      end
+    end
   end
 end
