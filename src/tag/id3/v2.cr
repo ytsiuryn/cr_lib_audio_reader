@@ -94,7 +94,11 @@ private class PictureValue < TextFrameValue
   field mime : String
   field _pict_type : UInt8
   field description : String # TODO: это обработает $00 (00) ?
-  field pict_data : Bytes, length: -> { @sz - 1 - mime.size - 1 - description.size - 2 }
+  field pict_data : Bytes, length: -> { @sz - 1 - mime.size - 1 - description.size - 2 }, onlyif: -> { false }
+
+  def initialize(@sz : Int32, @hashes = Set(String).new)
+    super(@sz)
+  end
 
   def pict_type
     PictType.new(_pict_type)
@@ -102,6 +106,14 @@ private class PictureValue < TextFrameValue
 
   def parse(io : IO)
     read(io)
+
+    data_length = @sz - 1 - mime.size - 1 - description.size - 2
+    if @hashes.includes?(PictureInAudio.identity_hash(pict_type, 0, 0, 0))
+      io.skip(data_length)
+      return
+    end
+    data = Bytes.new(data_length)
+    io.read_fully(data)
     p = PictureInAudio.new(pict_type)
     p.md.mime = mime
     if PictureInAudio.file_reference?(description)
@@ -109,7 +121,7 @@ private class PictureValue < TextFrameValue
     else
       p.notes << description
     end
-    p.data = pict_data
+    p.data = data
     p
   end
 end
@@ -172,7 +184,9 @@ class ID3v2Parser < BinData
         txt = InfoFrameValue.new(tag.frame_sz).parse(io)
         t.unprocessed[tag.frame_id] = txt
       when "APIC"
-        r.pictures << PictureValue.new(tag.frame_sz).parse(io)
+        if p = PictureValue.new(tag.frame_sz, r.pictures.hashes).parse(io)
+          r.pictures << p
+        end
       when "COMM"
         t.unprocessed[tag.frame_id] = CommentValue.new(tag.frame_sz).parse(io)
       else

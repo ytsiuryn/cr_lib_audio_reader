@@ -62,6 +62,9 @@ class ApeParser < BinData
                     when COVER_BACK_TAG  then PictType::COVER_BACK
                     else                      PictType::OTHER_ICON
                     end
+        if r.pictures.hashes.includes?(PictureInAudio.identity_hash(pict_type, 0, 0, 0))
+          next
+        end
         p = PictureInAudio.new(pict_type)
         p.url = String.new(tag.value[0, null_pos])
         p.data = tag.value[null_pos + 1..-1]

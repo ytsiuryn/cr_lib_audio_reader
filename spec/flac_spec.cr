@@ -3,7 +3,7 @@ require "core"
 require "../src/flac"
 
 describe FLAC do
-  it "#apply_to" do
+  it "#apply_to (need all pictures)" do
     r = Release.new
     flac = FLAC.new("spec/data/flac/440_hz_mono.flac")
     flac.apply_to(r)
@@ -34,6 +34,15 @@ describe FLAC do
     r.issues.actual.countries.should contain "test_country"
     r.ids[ReleaseIdType::DISCOGS].should eq "123456789"
     r.ids[ReleaseIdType::RUTRACKER].should eq "123456789"
+  end
+
+  it "#apply_to (there are all pictures)" do
+    r = Release.new
+    r.pictures.hashes << "ebe866d790104744274e9c96bfb408cca03a3c7908b3b32132b371a5053bb51b"
+    r.pictures.hashes << "039e5a055516daec75c3a9857308a7ed1ca53d8a18b323d38674974419efcef8"
+    flac = FLAC.new("spec/data/flac/440_hz_mono.flac")
+    flac.apply_to(r)
+    r.pictures.size.should eq 0
   end
 end
 

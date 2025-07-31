@@ -3,7 +3,7 @@ require "core"
 require "../src/dsf"
 
 describe DSF do
-  it "#apply_to" do
+  it "#apply_to (need all pictures)" do
     r = Release.new
     dsf = DSF.new("spec/data/dsf/440_hz_mono.dsf")
     dsf.apply_to(r)
@@ -41,5 +41,14 @@ describe DSF do
     r.issues.actual.countries.should contain "test_country"
     r.ids[ReleaseIdType::DISCOGS].should eq "123456789"
     r.ids[ReleaseIdType::RUTRACKER].should eq "123456789"
+  end
+
+  it "#apply_to (there are all pictures)" do
+    r = Release.new
+    r.pictures.hashes << "770d292cb7e348f40b675516c34a89a7263a07d0f5b2b6d1acd2d0f5040e1b28"
+    r.pictures.hashes << "e3dce5a4c20e7f495cfb6d39a90513c048c3e0d6d63b78cb20495ae4fdda7b4a"
+    dsf = DSF.new("spec/data/dsf/440_hz_mono.dsf")
+    dsf.apply_to(r)
+    r.pictures.size.should eq 0
   end
 end

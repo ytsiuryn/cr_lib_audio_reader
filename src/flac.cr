@@ -93,8 +93,9 @@ private class PictureBlock < FLACKBlock
 
   def read_block(io : IO) : Nil
     super(io)
-
-    if read_data?
+    if !@r.pictures.hashes.includes?(
+         PictureInAudio.identity_hash(pict_type, width.to_i, height.to_i, data_length.to_i)
+       )
       @data = Bytes.new(data_length)
       io.read_fully(@data)
     else
@@ -102,20 +103,18 @@ private class PictureBlock < FLACKBlock
     end
   end
 
-  private def read_data?
-    !@r.pictures.hashes.includes?(
-      PictureInAudio.identity_hash(pict_type, width.to_i, height.to_i, data_length.to_i)
-    )
-  end
-
   def process
     # raise "Incorrect track file info" if t.finfo.fsize == 0
-    return unless PictureInAudio.file_reference?(descr) || data.size > 0
+    return if data.empty?
     pict = PictureInAudio.new(pict_type)
     pict.md.mime = mime
     pict.md.width = width.to_i
     pict.md.height = height.to_i
-    pict.url = descr
+    if PictureInAudio.file_reference?(descr)
+      pict.url = descr
+    else
+      pict.notes << descr
+    end
     pict.data = data
     @r.pictures << pict
   end
