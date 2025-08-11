@@ -1,18 +1,18 @@
 name: reader
-version: 0.2.0
+version: 0.2.1
 
 authors:
   - Yury Tsiuryn <yuri.turin@gmail.com>
 
-# description: |
-#   Short description of reader
+description: |
+  Чтение тегов из аудиофайлов и формирование метаданных для трека и альбома в целом.
 
 dependencies:
   bindata:
     github: spider-gazelle/bindata 
 #     version: "~> 0.5"
   core:
-    path: "../core"
+    github: ytsiuryn/cr_lib_audio_core
 
 development_dependencies:
   ameba:
